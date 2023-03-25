@@ -16,7 +16,8 @@ zmqpp::message createMessage(const cv::Mat &frame)
 {
     // Convert the frame to binary data
     std::vector<uchar> buffer;
-    cv::imencode(".jpg", frame, buffer);
+    std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 50}; // Set JPEG quality to 50
+    cv::imencode(".jpg", frame, buffer, params);
 
     // Create a ZMQ message from the binary data
     zmqpp::message message(buffer.data(), buffer.size());
@@ -119,6 +120,26 @@ int main(int argc, char **argv)
         // {
         //     ptrPixelFormat->SetIntValue(ptrPixelFormatBayerRG8->GetValue());
         //     std::cout << "Pixel format set to " << ptrPixelFormatBayerRG8->GetSymbolic() << "..." << std::endl;
+        // }
+
+        // Get the TLStream.StreamBufferHandlingMode node
+        CEnumerationPtr ptrStreamBufferHandlingMode = pCam->GetTLStreamNodeMap().GetNode("StreamBufferHandlingMode");
+
+        if (!IsAvailable(ptrStreamBufferHandlingMode) || !IsWritable(ptrStreamBufferHandlingMode))
+        {
+            std::cout << "Unable to set StreamBufferHandlingMode (node retrieval). Aborting..." << std::endl;
+            return -1;
+        }
+
+        ptrStreamBufferHandlingMode->SetIntValue(StreamBufferHandlingMode_NewestOnly);
+
+
+
+        // // Set the handling mode to "Newest Only"
+        // if (ptrStreamBufferHandlingMode->SetIntValue(StreamBufferHandlingMode_NewestOnly) < 0)
+        // {
+        //     std::cout << "Unable to set StreamBufferHandlingMode (value setting). Aborting..." << std::endl;
+        //     return -1;
         // }
 
         // Get the Balance White Auto enumeration node
@@ -238,7 +259,6 @@ int main(int argc, char **argv)
                 message.add_raw(buffer.data(), buffer.size());
                 socket.send(message);
                 imshow("FireFly S Live Video Stream", cvImage);
-
             }
 
             pResultImage->Release();
