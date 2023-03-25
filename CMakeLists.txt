@@ -22,13 +22,17 @@ set(Spinnaker_INCLUDE_DIRS "/opt/spinnaker/include")
 # Set the libraries for the Spinnaker library
 set(Spinnaker_LIBRARIES "/opt/spinnaker/lib/libSpinnaker.so")
 
+## load in pkg-config support
+find_package(PkgConfig REQUIRED)
+## use pkg-config to get hints for 0mq locations
+pkg_check_modules(ZeroMQ libzmqpp)
 
 # Add the executable
 add_executable(stream stream.cpp)
 
 # Link the executable with the OpenCV, GStreamer, and Spinnaker libraries
-target_link_libraries(stream ${OpenCV_LIBS} ${GST_LIBRARIES} ${Spinnaker_LIBRARIES})
+target_link_libraries(stream ${OpenCV_LIBS} ${GST_LIBRARIES} ${Spinnaker_LIBRARIES} ${ZeroMQ_LIBRARIES})
 
 # Set the include directories for the OpenCV, GStreamer, and Spinnaker libraries
-target_include_directories(stream PUBLIC ${OpenCV_INCLUDE_DIRS} ${GST_INCLUDE_DIRS} ${Spinnaker_INCLUDE_DIRS})
+target_include_directories(stream PUBLIC ${OpenCV_INCLUDE_DIRS} ${GST_INCLUDE_DIRS} ${Spinnaker_INCLUDE_DIRS} ${ZeroMQ_INCLUDE_DIRS})
 

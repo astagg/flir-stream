@@ -1,0 +1,3 @@
+/home/pierce/projects/pierce/flir-stream/CMakeFiles/stream.dir
+/home/pierce/projects/pierce/flir-stream/CMakeFiles/edit_cache.dir
+/home/pierce/projects/pierce/flir-stream/CMakeFiles/rebuild_cache.dir

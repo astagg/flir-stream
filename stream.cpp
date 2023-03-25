@@ -5,12 +5,24 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
-#include <zmq.hpp>
+#include <zmqpp/zmqpp.hpp>
 
 using namespace Spinnaker;
 using namespace Spinnaker::GenApi;
 using namespace Spinnaker::GenICam;
 using namespace cv;
+
+zmqpp::message createMessage(const cv::Mat &frame)
+{
+    // Convert the frame to binary data
+    std::vector<uchar> buffer;
+    cv::imencode(".jpg", frame, buffer);
+
+    // Create a ZMQ message from the binary data
+    zmqpp::message message(buffer.data(), buffer.size());
+
+    return message;
+}
 
 int PrintDeviceInfo(INodeMap &nodeMap)
 {
@@ -55,13 +67,13 @@ int PrintDeviceInfo(INodeMap &nodeMap)
 int main(int argc, char **argv)
 {
 
-    // Set up the ZeroMQ context and publisher socket
-    zmq::context_t context(1);
-    zmq::socket_t publisher(context, zmq::socket_type::pub);
-
-    publisher.bind("tcp://*:5555");
-
     int result = 0;
+
+    // Initialize ZMQ context and socket
+    zmqpp::context context;
+    zmqpp::socket_type type = zmqpp::socket_type::pub;
+    zmqpp::socket socket(context, type);
+    socket.bind("tcp://*:5555");
 
     // Retrieve singleton reference to system object
     SystemPtr system = System::GetInstance();
@@ -217,21 +229,19 @@ int main(int argc, char **argv)
                 unsigned int rowsize = convertedImage->GetWidth();
                 unsigned int colsize = convertedImage->GetHeight();
                 cvImage = Mat(colsize, rowsize, CV_8UC3, convertedImage->GetData(), convertedImage->GetStride());
+                // Serialize the Mat into a byte buffer
+                std::vector<uchar> buffer;
+                cv::imencode(".jpg", cvImage, buffer);
 
-                // Serialize the cvImage
-                std::vector<uchar> buf;
-                cv::imencode(".jpg", cvImage, buf);
-                std::string serialized_image(buf.begin(), buf.end());
+                // Create a ZMQ message from the byte buffer
+                zmqpp::message message;
+                message.add_raw(buffer.data(), buffer.size());
+                socket.send(message);
+                imshow("FireFly S Live Video Stream", cvImage);
 
-                // Send the serialized cvImage to the ZeroMQ queue
-                zmq::message_t zmq_message(serialized_image.size());
-                memcpy(zmq_message.data(), serialized_image.data(), serialized_image.size());
-                publisher.send(zmq_message, zmq::send_flags::none);
-
-                pResultImage->Release();
             }
 
-            imshow("FireFly S Live Video Stream", cvImage);
+            pResultImage->Release();
 
             // Press 'q' to exit the loop
             if (waitKey(30) == 'q')
