@@ -69,10 +69,6 @@ int main(int argc, char **argv)
 {
     int result = 0;
 
-    // Load the pre-trained model
-    cv::CascadeClassifier faceCascade;
-    faceCascade.load("haarcascade_frontalface_default.xml");
-
     // Initialize ZMQ context and socket
     zmqpp::context context;
     zmqpp::socket_type type = zmqpp::socket_type::pub;
@@ -259,20 +255,6 @@ int main(int argc, char **argv)
                 zmqpp::message message;
                 message.add_raw(buffer.data(), buffer.size());
                 socket.send(message);
-
-                // Convert the frame to grayscale
-                cv::Mat gray;
-                cv::cvtColor(cvImage, gray, cv::COLOR_BGR2GRAY);
-
-                // Detect objects in the frame
-                std::vector<cv::Rect> objects;
-                faceCascade.detectMultiScale(gray, objects, 1.1, 3, 0, cv::Size(30, 30));
-
-                // Draw bounding boxes around the detected objects
-                for (const auto &rect : objects)
-                {
-                    cv::rectangle(cvImage, rect, cv::Scalar(0, 255, 0), 2);
-                }
 
                 imshow("FireFly S Live Video Stream", cvImage);
             }
