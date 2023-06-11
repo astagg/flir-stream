@@ -68,16 +68,16 @@ int PrintDeviceInfo(INodeMap &nodeMap)
 int main(int argc, char **argv)
 {
     int result = 0;
-    zmqpp::context context;
-    zmqpp::socket socket(context, zmqpp::socket_type::pub);
+    void *context = zmq_ctx_new();
+    void *socket = zmq_socket(context, ZMQ_PUB);
 
     // Set socket options to use UDP
-    socket.set(zmqpp::socket_option::linger, 0);
-    socket.set(zmqpp::socket_option::type, ZMQ_PUB);
-    socket.set(zmqpp::socket_option::ipv6, 0);
+    int option_value = 1;
+    zmq_setsockopt(socket, ZMQ_XPUB_NODROP, &option_value, sizeof(option_value));
 
-    std::string endpoint = "udp://*:5555";
-    socket.bind(endpoint);
+    std::string endpoint = "udp://127.0.0.1:5555";
+    zmq_bind(socket, endpoint.c_str());
+
     // Retrieve singleton reference to system object
     SystemPtr system = System::GetInstance();
 
@@ -252,10 +252,11 @@ int main(int argc, char **argv)
                 std::vector<uchar> buffer;
                 cv::imencode(".jpg", cvImage, buffer);
 
-                // Create a ZMQ message from the byte buffer
-                zmqpp::message message;
-                message.add_raw(buffer.data(), buffer.size());
-                socket.send(message);
+                zmq_msg_t msg;
+                zmq_msg_init_size(&msg, buffer.size());
+                memcpy(zmq_msg_data(&msg), buffer.data(), buffer.size());
+                zmq_sendmsg(socket, &msg, 0);
+                zmq_msg_close(&msg);
             }
 
             pResultImage->Release();
@@ -266,6 +267,9 @@ int main(int argc, char **argv)
                 break;
             }
         }
+
+        zmq_close(socket);
+        zmq_ctx_destroy(context);
 
         pCam->EndAcquisition();
         pCam->DeInit();
