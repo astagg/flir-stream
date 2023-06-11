@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     zmqpp::context context;
     zmqpp::socket_type type = zmqpp::socket_type::pub;
     zmqpp::socket socket(context, type);
-    socket.bind("tcp://*:5555");
+    socket.bind("udp://*:5555");
 
     // Retrieve singleton reference to system object
     SystemPtr system = System::GetInstance();
