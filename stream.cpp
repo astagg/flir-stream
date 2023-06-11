@@ -224,8 +224,6 @@ int main(int argc, char **argv)
 
         std::cout << "Begin acquiring images..." << std::endl;
 
-        namedWindow("FireFly S Live Video Stream", WINDOW_AUTOSIZE);
-
         Mat cvImage;
 
         while (1)
@@ -256,7 +254,6 @@ int main(int argc, char **argv)
                 message.add_raw(buffer.data(), buffer.size());
                 socket.send(message);
 
-                imshow("FireFly S Live Video Stream", cvImage);
             }
 
             pResultImage->Release();
