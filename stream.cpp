@@ -68,13 +68,16 @@ int PrintDeviceInfo(INodeMap &nodeMap)
 int main(int argc, char **argv)
 {
     int result = 0;
-
-    // Initialize ZMQ context and socket
     zmqpp::context context;
-    zmqpp::socket_type type = zmqpp::socket_type::pub;
-    zmqpp::socket socket(context, type);
-    socket.bind("udp://*:5555");
+    zmqpp::socket socket(context, zmqpp::socket_type::pub);
 
+    // Set socket options to use UDP
+    socket.set(zmqpp::socket_option::linger, 0);
+    socket.set(zmqpp::socket_option::type, ZMQ_PUB);
+    socket.set(zmqpp::socket_option::ipv6, 0);
+
+    std::string endpoint = "udp://*:5555";
+    socket.bind(endpoint);
     // Retrieve singleton reference to system object
     SystemPtr system = System::GetInstance();
 
@@ -253,7 +256,6 @@ int main(int argc, char **argv)
                 zmqpp::message message;
                 message.add_raw(buffer.data(), buffer.size());
                 socket.send(message);
-
             }
 
             pResultImage->Release();
