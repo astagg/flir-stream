@@ -245,10 +245,15 @@ int main(int argc, char **argv)
                 unsigned int rowsize = convertedImage->GetWidth();
                 unsigned int colsize = convertedImage->GetHeight();
                 cvImage = Mat(colsize, rowsize, CV_8UC3, convertedImage->GetData(), convertedImage->GetStride());
+
+                // Resize the image to a smaller size
+                cv::Mat resizedImage;
+                cv::resize(cvImage, resizedImage, cv::Size(640, 480));
+
                 // Serialize the Mat into a byte buffer
                 std::vector<uchar> buffer;
                 std::vector<int> params = {cv::IMWRITE_JPEG_QUALITY, 50}; // Set JPEG quality to 50
-                cv::imencode(".jpg", cvImage, buffer, params);
+                cv::imencode(".jpg", resizedImage, buffer, params);
 
                 // Create a ZMQ message from the byte buffer
                 zmqpp::message message;
